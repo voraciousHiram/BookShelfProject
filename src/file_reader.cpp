@@ -125,3 +125,73 @@ void FileReader::read_nets(const std::filesystem::path &nets_path) {
     }
   }
 }
+
+void FileReader::read_scl(const fs::path& scl_path)
+{
+    if (scl_path.extension() != ".scl") {
+        throw std::runtime_error("File extension is not .scl");
+    }
+
+    std::ifstream file(scl_path);
+    if (!file) {
+        throw std::runtime_error("File not found/opened: " + scl_path.filename().string());
+    }
+
+    std::string line;
+    int numRows = 0;
+    while (std::getline(file, line)) {
+        // 去除注释和空行
+        if (line.empty() || line[0] == '#') continue;
+
+        std::istringstream iss(line);
+        std::string token;
+        iss >> token;
+
+        if (token == "NumRows") {
+            iss.ignore(256, ':');
+            iss >> numRows;
+            pdata->numRows = numRows; // 如果PlaceData有这个字段
+        } else if (token == "CoreRow") {
+            // 进入CoreRow块
+            std::string orientation;
+            iss >> orientation; // Horizontal
+            int Coordinate = 0, Height = 0, Sitewidth = 0, Sitespacing = 0;
+            int Siteorient = 0, Sitesymmetry = 0, SubrowOrigin = 0, NumSites = 0;
+
+            // 逐行读取CoreRow参数
+            while (std::getline(file, line)) {
+                if (line.find("End") != std::string::npos) break;
+                std::istringstream row_iss(line);
+                std::string key;
+                row_iss >> key;
+                if (key == "Coordinate") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> Coordinate;
+                } else if (key == "Height") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> Height;
+                } else if (key == "Sitewidth") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> Sitewidth;
+                } else if (key == "Sitespacing") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> Sitespacing;
+                } else if (key == "Siteorient") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> Siteorient;
+                } else if (key == "Sitesymmetry") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> Sitesymmetry;
+                } else if (key == "SubrowOrigin") {
+                    row_iss.ignore(256, ':');
+                    row_iss >> SubrowOrigin;
+                    std::string dummy;
+                    row_iss >> dummy; // NumSites
+                    row_iss.ignore(256, ':');
+                    row_iss >> NumSites;
+                }
+            }
+        }
+    }
+    std::cout << "read_scl done" << std::endl;
+}

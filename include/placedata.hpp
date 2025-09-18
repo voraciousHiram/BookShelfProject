@@ -17,6 +17,8 @@ public:
     vector<shared_ptr<Net>> Nets;
     vector<SiteRow> SiteRows;
 
+    int numRows; 
+
     map<string, shared_ptr<Module>> moduleMap; 
     shared_ptr<Module> getModuleByName(const string &name){
         if(moduleMap.find(name) != moduleMap.end()){
